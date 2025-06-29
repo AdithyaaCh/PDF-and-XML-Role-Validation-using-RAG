@@ -1,6 +1,7 @@
 # AI Role Validator: XML to PDF Job Role Comparison
 
-<img width="820" alt="image" src="https://github.com/user-attachments/assets/b4960c68-8d89-432d-89e3-a106cb630c84" />
+<img width="822" alt="image" src="https://github.com/user-attachments/assets/3f7cbf10-1756-44b2-b93b-8747bcdb67fe" />
+
 
 
 
