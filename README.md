@@ -1,6 +1,7 @@
 # AI Role Validator: XML to PDF Job Role Comparison
 
-![YouTube Thumbnail](XMLRoleValidator.png)
+![Uploading image.png…]()
+
 
 > A smart tool to compare structured job role definitions (from XML) with roles found in unstructured PDF job descriptions using AI, RAG, and fuzzy logic.
 
