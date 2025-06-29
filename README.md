@@ -36,7 +36,7 @@ Used to catch **typos** and **minor word-level errors**.
 
 > **Example:**
 > XML: `Tester`
-> PDF: `Teater`
+> PDF: `Tester`
 > → Edit distance = 1 substitution
 > → Similarity ≈ **83.33%**
 
