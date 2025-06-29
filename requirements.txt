@@ -1,0 +1,8 @@
+lxml
+PyPDF2
+python-dotenv
+google-generativeai
+pinecone-client
+fuzzywuzzy
+python-Levenshtein
+PyMuPDF
