@@ -102,45 +102,62 @@ class RAGPDFExtractor:
 
     def query_pdf_for_roles_from_pinecone(self, pdf_path: str, query: str) -> str:
         """
-        Queries the processed PDF content (via Pinecone) for specific information.
-        This demonstrates RAG in action for general queries, not just role extraction.
+        Queries the processed PDF in Pinecone for `query`. Returns LLM answer.
         """
+        # 1. Embed the user query
         query_embedding = self.gemini_client.embed_text(query)
         if not query_embedding:
             return "Could not generate query embedding."
-        results = self.pinecone_client.query_vectors(query_embedding, top_k=10) 
-        print(f"\n--- DEBUG: Raw Pinecone Query Results (top {len(results.matches)} matches) ---")
-        for match in results.matches:
-            print(f"  ID: {match.id}, Score: {match.score}, Content (first 100 chars): {match.metadata.get('content', '')[:100]}...")
+
+        # 2. Run the vector search
+        raw_results = self.pinecone_client.query_vectors(query_embedding, top_k=20)
+
+        # 3. Normalize to a list of matches
+        if hasattr(raw_results, "matches"):
+            matches = raw_results.matches
+        elif isinstance(raw_results, list):
+            matches = raw_results
+        else:
+            return "Unexpected response format from Pinecone."
+
+        print(f"\n--- DEBUG: Raw Pinecone Query Results (top {len(matches)} matches) ---")
+        for m in matches:
+            content_snip = m.metadata.get("content", "")[:100]
+            print(f"  ID: {m.id}, Score: {m.score:.4f}, Content: {content_snip}...")
         print("---------------------------------------------------\n")
 
-        if not results.matches: 
+        if not matches:
             return "No relevant information found in PDF."
 
-        retrieved_contexts = []
-        for match in results.matches: 
-            if 'metadata' in match and 'content' in match.metadata:
-                retrieved_contexts.append(match.metadata['content'])
+        # 4. Pull out the text to send to the LLM
+        contexts = []
+        for m in matches:
+            txt = m.metadata.get("content")
+            if txt:
+                contexts.append(txt)
             else:
-                print(f"Warning: Content not found in metadata for vector ID: {match.id}")
+                print(f"Warning: no content for vector ID {m.id}")
 
-        if not retrieved_contexts:
-            return "No content retrieved from relevant chunks."
+        if not contexts:
+            return "No retrievable content in the matched chunks."
 
-        full_context = "\n\n".join(retrieved_contexts)
-
+        full_context = "\n\n".join(contexts)
         print("\n--- DEBUG: Context sent to LLM for general query ---")
         print(full_context)
         print("---------------------------------------------------\n")
 
-        if "table" in query.lower() or "count" in query.lower() or "number of" in query.lower() or "how many" in query.lower():
-            prompt = (f"Based on the following document excerpts, specifically focus on any tables or structured lists "
-                      f"to answer the question: '{query}'. If exact numbers are provided, use them. "
-                      f"If no relevant table or count is found, state that.\n\n"
-                      f"Document Excerpts:\n{full_context}\n\nAnswer:")
+        # 5. Build a prompt that tries to lean on tables if the question is about counts
+        if any(k in query.lower() for k in ("table", "count", "number of", "how many")):
+            prompt = (
+                f"Based on the following document excerpts, specifically focus on any tables or structured lists "
+                f"to answer: '{query}'. If exact numbers are provided, use them. If no relevant table is found, say so.\n\n"
+                f"Document Excerpts:\n{full_context}\n\nAnswer:"
+            )
         else:
-            prompt = (f"Based on the following document excerpts, answer the question: '{query}'.\n\n"
-                      f"Document Excerpts:\n{full_context}\n\nAnswer:")
+            prompt = (
+                f"Based on the following document excerpts, answer: '{query}'.\n\n"
+                f"Document Excerpts:\n{full_context}\n\nAnswer:"
+            )
 
-        answer = self.gemini_client.generate_text(prompt)
-        return answer
+        # 6. Let Gemini answer
+        return self.gemini_client.generate_text(prompt)
