@@ -3,6 +3,9 @@
 <img width="822" alt="image" src="https://github.com/user-attachments/assets/3f7cbf10-1756-44b2-b93b-8747bcdb67fe" />
 
 
+## Workflow 
+
+<img width="922" height="453" alt="image" src="https://github.com/user-attachments/assets/313c3110-e845-46e7-8b50-0a2b48c7dd8e" />
 
 
 > A smart tool to compare structured job role definitions (from XML) with roles found in unstructured PDF job descriptions using AI, RAG, and fuzzy logic.
